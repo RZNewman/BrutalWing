@@ -32,7 +32,7 @@ public class Attack : NetworkBehaviour {
         if (isServer && Time.time - birth > duration)
         {
             //Debug.Log(isServer);
-            NetworkServer.FindLocalObject(owner).GetComponent<PlayerMover>().endAttack();
+            NetworkServer.FindLocalObject(owner).GetComponent<PlayerMover>().RpcEndAttack();
             
         }
 	}

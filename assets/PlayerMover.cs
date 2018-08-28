@@ -10,9 +10,7 @@ public class PlayerMover : NetworkBehaviour {
 
     Rigidbody rb;
     CapsuleCollider col;
-    [SyncVar]
     PState current;
-    [SyncVar]
     LookState look;
     GameObject attack;
 
@@ -53,7 +51,7 @@ public class PlayerMover : NetworkBehaviour {
 	}
 
     // Update is called once per frame
-    //public float moveForce = 600;
+    public float moveForce = 600;
     public float maxSpeed = 3;
     public float jumpForce = 20;
     public float KBDeteriorate = 2;
@@ -66,10 +64,14 @@ public class PlayerMover : NetworkBehaviour {
                 registerHit = false;
                 if (attack)
                 {
-                    endAttack();
+                    RpcEndAttack();
                 }
-                takeHit(hitDirection * hitMag);
+                RpcTakeHit(hitDirection * hitMag);
             }
+
+        }
+        if (hasAuthority)
+        {
 
             bool movement = true;
             switch (current)
@@ -100,7 +102,7 @@ public class PlayerMover : NetworkBehaviour {
                     movement = false;
                     planeVel = planeVel.normalized * (planeVel.magnitude - KBDeteriorate * Time.fixedDeltaTime * (grounded ? 1 : 0.4f));
                     break;
-                    #endregion
+                 #endregion
             }
             if (movement)
             {
@@ -132,6 +134,8 @@ public class PlayerMover : NetworkBehaviour {
                 planeVel = move * maxSpeed;
                 #endregion
             }
+
+
             switch (look)
             {
                 case LookState.Free:
@@ -144,24 +148,10 @@ public class PlayerMover : NetworkBehaviour {
             if (look == LookState.Free && inp.atk1)
             {
                 look = LookState.Attacking;
-
-                atk(attackType.basic);
-
+                
+                CmdAtk(attackType.basic);
+                
             }
-
-        }
-        if (isClient)
-        {
-            switch (look)
-            {
-                case LookState.Free:
-                    Vector3 dif = inp.target - transform.position;
-                    dif.y = 0;
-                    transform.rotation = Quaternion.LookRotation(dif);
-                    break;
-
-            }
-
 
         }
 
@@ -170,16 +160,16 @@ public class PlayerMover : NetworkBehaviour {
     float hitMag;
     Vector3 hitDirection;
     bool registerHit = false;
-    [Server]
-    void takeHit(Vector3 vel)
+    [ClientRpc]
+    void RpcTakeHit(Vector3 vel)
     {
         planeVel = vel;
         current = PState.KB;
     }
 
 
-    [Server]
-    public void endAttack()
+    [ClientRpc]
+    public void RpcEndAttack()
     {
         Destroy(attack);
         attack = null;
@@ -224,8 +214,8 @@ public class PlayerMover : NetworkBehaviour {
         }
         
     }
-    [Server]
-    void atk(attackType a)
+    [Command]
+    void CmdAtk(attackType a)
     {
         //Debug.Log(atkPre);
         GameObject atkPre = lookup(a);

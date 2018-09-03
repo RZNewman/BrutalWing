@@ -6,13 +6,18 @@ using UnityEngine.Networking;
 public class PlayerMover : NetworkBehaviour {
     public InputHandler inp;
     public GameObject attackPre1;
+    public GameObject attackPre2;
+    public GameObject abilPre1;
+    public GameObject abilPre2;
     public PlayerGhost ghost;
 
     Rigidbody rb;
     CapsuleCollider col;
+    Health hp;
     PState current;
     LookState look;
     GameObject attack;
+    Visuals vis;
 
 
     enum PState
@@ -28,7 +33,10 @@ public class PlayerMover : NetworkBehaviour {
     }
     enum attackType
     {
-        basic
+        basic,
+        heavy,
+        abil1,
+        abil2
     }
 
     GameObject lookup(attackType a)
@@ -37,18 +45,41 @@ public class PlayerMover : NetworkBehaviour {
         {
             case attackType.basic:
                 return attackPre1;
+            case attackType.heavy:
+                return attackPre2;
+            case attackType.abil1:
+                return abilPre1;
+            case attackType.abil2:
+                return abilPre2;
             default:
                 return attackPre1;
         }
             
     }
+    void setCD(attackType a, float cd)
+    {
+        switch (a)
+        {
+            case attackType.abil1:
+                abil1CD = cd;
+                break;
+            case attackType.abil2:
+                abil2CD = cd;
+                break;
+        }
+    }
 	// Use this for initialization
 	void Start () {
         rb = GetComponent<Rigidbody>();
         col = GetComponent<CapsuleCollider>();
+        hp = GetComponent<Health>();
         current = PState.Free;
         look = LookState.Free;
-	}
+        
+        vis = GetComponent<Visuals>();
+
+
+    }
 
     // Update is called once per frame
     public float moveForce = 600;
@@ -56,6 +87,20 @@ public class PlayerMover : NetworkBehaviour {
     public float jumpForce = 20;
     public float KBDeteriorate = 2;
     public float KBRegain = 2;
+    public float sprintModHalf = 0.3f;
+    public float sprintModFull = 0.7f;
+    public float sprintBuild = 2;
+    public float sprintChangeLoss = 0.3f;
+
+    float sprintBuildCurrent = 0;
+    bool sprinting= false;
+    Vector3 lastMove = new Vector3();
+    [SyncVar]
+    float attackTurn = 0;
+    [SyncVar]
+    float abil1CD = 0;
+    [SyncVar]
+    float abil2CD = 0;
     void FixedUpdate () {
         if (isServer)
         {
@@ -64,20 +109,43 @@ public class PlayerMover : NetworkBehaviour {
                 registerHit = false;
                 if (attack)
                 {
+
                     RpcEndAttack();
                 }
-                RpcTakeHit(hitDirection * hitMag);
+                if (hp.change(-hitDamage))
+                {
+                    Destroy(gameObject);
+                }
+                else
+                {
+                    RpcTakeHit(hitDirection * hitMag);
+                }
+                
+            }
+            if (abil1CD > 0)
+            {
+                abil1CD -= Time.fixedDeltaTime;
+            }
+            if (abil2CD > 0)
+            {
+                abil2CD -= Time.fixedDeltaTime;
             }
 
         }
         if (hasAuthority)
         {
-
+            ghost.renderCD(abil1CD, abil2CD);
             bool movement = true;
+            Vector3 move = new Vector3();
             switch (current)
             {
                 #region states
                 case PState.Free:
+                    if (!grounded)
+                    {
+                        current = PState.Air;
+                        movement = false;
+                    }
                     if (inp.jump) //here
                     {
                         rb.AddForce(Vector3.up * jumpForce);
@@ -107,7 +175,7 @@ public class PlayerMover : NetworkBehaviour {
             if (movement)
             {
                 #region movement
-                Vector3 move = new Vector3();
+                
                 if (inp.up)
                 {
                     move += new Vector3(0, 0, 1);
@@ -130,41 +198,145 @@ public class PlayerMover : NetworkBehaviour {
                 //{
                 //    planeVel = planeVel.normalized * maxSpeed;
                 //}
+                if (!sprinting )
+                {
+                    #region sprintS
+                    if (move != Vector3.zero)
+                    {
+                        if (lastMove == move)
+                        {
+                            sprintBuildCurrent += Time.fixedDeltaTime;
+                        }
+                        else
+                        {
+                            float diff = (move - lastMove).magnitude;
+                            if (diff > 1) { diff = 1; }
+                            Mathf.Pow(diff, 3);
+                            //print(diff);
+                            sprintBuildCurrent -= sprintChangeLoss*diff;
+                            if (sprintBuildCurrent < 0)
+                            {
+                                sprintBuildCurrent = 0;
+                            }
+                        }
+                    }
+                   
+                    lastMove = move;
+                    
+                    if (sprintBuildCurrent > sprintBuild)
+                    {
+                        //print("sprinting");
+                        setSprint(true);
+                    }
+                    else
+                    {
+                        vis.CmdSprintAlpha(sprintPer);
+                    }
+                    #endregion
 
-                planeVel = move * maxSpeed;
+                }
+                planeVel = ghost.spawnMutate(move) * maxSpeed*((sprintSpeed)+1);
                 #endregion
             }
 
-
+            Vector3 dif;
             switch (look)
             {
+
+
                 case LookState.Free:
-                    Vector3 dif = inp.target - transform.position;
+                    dif = inp.target - transform.position;
                     dif.y = 0;
                     transform.rotation = Quaternion.LookRotation(dif);
                     break;
+                case LookState.Attacking:
+                    if(current!= PState.Air)
+                    {
+                        dif = inp.target - transform.position;
+                        dif.y = 0;
+                        transform.rotation = Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(dif),attackTurn*Time.fixedDeltaTime);
+                    }
+                    break;
 
             }
-            if (look == LookState.Free && inp.atk1)
+            if (look == LookState.Free && inp.attacking)
             {
-                look = LookState.Attacking;
                 
-                CmdAtk(attackType.basic);
-                
-            }
+                if (inp.atk1)
+                {
+                    look = LookState.Attacking;
+                    setSprint(false);
+                    CmdAtk(attackType.basic, inp.groundTarget);
+                }
+                else if (inp.atk2)
+                {
+                    look = LookState.Attacking;
+                    setSprint(false);
+                    CmdAtk(attackType.heavy, inp.groundTarget);
+                }
+                else if (inp.abil1 && abil1CD<=0)
+                {
+                    look = LookState.Attacking;
+                    setSprint(false);
+                    CmdAtk(attackType.abil1, inp.groundTarget);
+                }
+                else if (inp.abil2&& abil2CD <=0)
+                {
+                    look = LookState.Attacking;
+                    setSprint(false);
+                    CmdAtk(attackType.abil2, inp.groundTarget);
+                }
 
+
+            }
+            vis.CmdPropagate();
         }
 
 
     }
+
+    void setSprint(bool s)
+    {
+        sprinting = s;
+        
+        if (s)
+        {
+            sprintBuildCurrent = sprintBuild;
+        }
+        else
+        {
+            sprintBuildCurrent = 0;
+        }
+        vis.CmdSprintAlpha(sprintPer);
+    }
+    float sprintPer
+    {
+        get
+        {
+            return sprintBuildCurrent / sprintBuild;
+        }
+    }
+    float sprintSpeed
+    {
+        get
+        {
+            return sprinting ? sprintModFull : sprintModHalf * sprintPer;
+        }
+    }
+
+
     float hitMag;
     Vector3 hitDirection;
+    int hitDamage;
+    [SyncVar]
+    NetworkInstanceId lastHit;
     bool registerHit = false;
     [ClientRpc]
     void RpcTakeHit(Vector3 vel)
     {
         planeVel = vel;
         current = PState.KB;
+        setSprint(false);
     }
 
 
@@ -172,18 +344,27 @@ public class PlayerMover : NetworkBehaviour {
     public void RpcEndAttack()
     {
         Destroy(attack);
+        vis.CmdColorNose(false);
         attack = null;
         look = LookState.Free;
     }
 
     [Server]
-    public void getHit(float force, Vector3 location)
+    public void getHit(float force, Vector3 location, int dmg, NetworkInstanceId owner)
+    {
+        //GameObject hitter = NetworkServer.FindLocalObject(owner);
+        //NetworkIdentity iden = hitter.GetComponent<NetworkIdentity>();
+        //NetworkConnection nc = iden.connectionToClient;
+        lastHit = owner;
+        getHit(force, location, dmg);
+    }
+    [Server]
+    public void getHit(float force, Vector3 dir, int dmg)
     {
         registerHit = true;
         hitMag = force;
-        hitDirection = transform.position - location;
-        hitDirection.y = 0;
-        hitDirection.Normalize();
+        hitDirection = dir;
+        hitDamage = dmg;
     }
     Vector3 planeVel
     {
@@ -196,13 +377,13 @@ public class PlayerMover : NetworkBehaviour {
             rb.velocity = new Vector3(value.x, rb.velocity.y, value.z);
         }
     }
-    bool grounded
+    public bool grounded
     {
         get
         {
             RaycastHit r = new RaycastHit();
             
-            return Physics.SphereCast(transform.position, col.radius, -transform.up, out r, col.bounds.extents.y + 0.05f, 1 << 9) 
+            return Physics.SphereCast(transform.position, col.radius, -transform.up, out r, col.bounds.extents.y + 0.03f, 1 << 9) 
                 && rb.velocity.y<= 0.1f;
         }
     }
@@ -210,17 +391,45 @@ public class PlayerMover : NetworkBehaviour {
     {
         if (ghost)
         {
-            ghost.charDied();
+            ghost.charDied(lastHit);
         }
         
     }
     [Command]
-    void CmdAtk(attackType a)
+    void CmdAtk(attackType a, Vector3 groundTarget)
     {
         //Debug.Log(atkPre);
+        vis.RpcColorNose(true);
         GameObject atkPre = lookup(a);
         attack = Instantiate(atkPre, transform);
-        attack.GetComponent<Attack>().setOwner(netId);
+        Attack atk = attack.GetComponent<Attack>();
+        atk.setOwner(netId, ghost.netId);
+        setCD(a, atk.cooldown);
+        if (attack.GetComponent<AttackM>())
+        {
+            attack.GetComponent<AttackM>().setColliders(false);
+            attackTurn = attack.GetComponent<AttackM>().turnDeg;
+        }
+        else if (attack.GetComponent<AttackS>())
+        {
+            AttackS spwn = attack.GetComponent<AttackS>();
+            Vector3 tar= groundTarget;
+            tar.y = 0;
+            Vector3 loc = transform.position;
+            loc.y = 0;
+            if ((tar - loc).magnitude > spwn.range)
+            {
+                tar = (tar - loc).normalized * spwn.range + loc;
+            }
+            tar.y = groundTarget.y;
+            spwn.target = tar;
+            attackTurn = 0;
+        }
+        else
+        {
+            attackTurn = 360;
+        }
+        
         NetworkServer.Spawn(attack);
         
         

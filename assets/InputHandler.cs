@@ -4,8 +4,8 @@ using UnityEngine;
 
 public abstract class InputHandler : MonoBehaviour
 {
-    public bool up, down, left, right, jump, atk1;
-    public Vector3 target;
+    public bool up, down, left, right, jump, atk1, atk2, abil1, abil2;
+    public Vector3 target, groundTarget;
 
     // Use this for initialization
     void Start()
@@ -16,12 +16,23 @@ public abstract class InputHandler : MonoBehaviour
         right = false;
         jump = false;
         atk1 = false;
+        atk2 = false;
+        abil1 = false;
+        abil2 = false;
         target = new Vector3();
+        groundTarget = new Vector3();
+    }
+    public bool attacking
+    {
+        get
+        {
+            return atk1 || atk2|| abil1 || abil2;
+        }
     }
     public struct data
     {
-        public bool up, down, left, right, jump, atk1;
-        public Vector3 target;
+        public bool up, down, left, right, jump, atk1, atk2, abil1, abil2;
+        public Vector3 target, groundTarget;
     }
 
     public void sync(data inp)
@@ -32,7 +43,11 @@ public abstract class InputHandler : MonoBehaviour
         right = inp.right;
         jump = inp.jump;
         atk1 = inp.atk1;
+        atk2 = inp.atk2;
+        abil1 = inp.abil1;
+        abil2 = inp.abil2;
         target = inp.target;
+        groundTarget = inp.groundTarget;
        
     }
 
@@ -45,7 +60,11 @@ public abstract class InputHandler : MonoBehaviour
         d.right = right;
         d.jump = jump;
         d.atk1 = atk1;
+        d.atk2 = atk2;
+        d.abil1 = abil1;
+        d.abil2 = abil2;
         d.target = target;
+        d.groundTarget = groundTarget;
         return d;
     }
     // Update is called once per frame

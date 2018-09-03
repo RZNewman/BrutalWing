@@ -3,45 +3,68 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class Attack : NetworkBehaviour {
+public abstract class Attack : NetworkBehaviour {
+    public float cooldown = 0;
     public float duration = 1;
-    public float force = 400;
+
+    
+    public float windUp = 0.2f;
+    
+
+    
 
     [SyncVar]
-    NetworkInstanceId owner;
-    float birth;
-    List<GameObject> hit = new List<GameObject>();
-	// Use this for initialization
-	void Start () {
+    protected NetworkInstanceId owner;
+    protected NetworkInstanceId player;
+    protected float birth;
+    
+
+
+    // Use this for initialization
+    void Start () {
         birth = Time.time;
+        
+        
+       
 	}
-	
-    [Server]
-    public void setOwner(NetworkInstanceId own)
-    {
-        owner = own;
-    }
     public override void OnStartClient()
     {
         GameObject par = ClientScene.FindLocalObject(owner);
         transform.parent = par.transform;
-        transform.position = par.transform.position;
+        transform.position = transform.parent.position;
+        visuals();
     }
-	// Update is called once per frame
-	void Update () {
-        if (isServer && Time.time - birth > duration)
-        {
-            //Debug.Log(isServer);
-            NetworkServer.FindLocalObject(owner).GetComponent<PlayerMover>().RpcEndAttack();
-            
-        }
-	}
-    void OnTriggerEnter(Collider other)
+    protected abstract void visuals();
+    protected abstract void uptake(float cur);
+
+    void Update()
     {
-        if(isServer &&other.gameObject!= NetworkServer.FindLocalObject(owner) && !hit.Contains(other.gameObject))
+        if (isServer)
         {
-            hit.Add(other.gameObject);
-            other.GetComponent<PlayerMover>().getHit(force, transform.position);
+            float cur = Time.time - birth;
+            if (cur > duration)
+            {
+                //Debug.Log("here");
+                NetworkServer.FindLocalObject(owner).GetComponent<PlayerMover>().RpcEndAttack();
+            }
+            else
+            {
+                uptake(cur);
+            }
         }
     }
+
+
+    [Server]
+    public void setOwner(NetworkInstanceId own, NetworkInstanceId play)
+    {
+        owner = own;
+        player = play;
+    }
+
+	// Update is called once per frame
+
+
+
+
 }

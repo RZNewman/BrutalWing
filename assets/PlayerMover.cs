@@ -167,6 +167,7 @@ public class PlayerMover : NetworkBehaviour {
                     {
                         current = PState.Free;
                     }
+                    //print(planeVel);
                     movement = false;
                     planeVel = planeVel.normalized * (planeVel.magnitude - KBDeteriorate * Time.fixedDeltaTime * (grounded ? 1 : 0.4f));
                     break;

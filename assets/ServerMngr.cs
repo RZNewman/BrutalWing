@@ -27,21 +27,21 @@ public class ServerMngr : NetworkBehaviour
     }
     public void addScore(int id)
     {
-        if(id!= -1)
-        {
-            int v = id;
-            if (score.ContainsKey(v))
-            {
-                score[v] += 1;
-            }
-            else
-            {
-                score.Add(v, 0);
-            }
 
-            gm.display(export());
-        }
+
+        score[id] += 1;
+
+
+        gm.display(export());
         
+        
+    }
+    public void register(int id)
+    {
+        if (!score.ContainsKey(id))
+        {
+            score.Add(id, 0);
+        }
     }
     int[] export()
     {

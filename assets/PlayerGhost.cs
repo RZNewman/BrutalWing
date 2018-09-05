@@ -23,7 +23,7 @@ public class PlayerGhost : NetworkBehaviour {
             inp = GetComponent<PhysicalInput>();
             gm = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameMngr>();
             CmdAssignConnection();
-            CmdUpdateScore(netId);
+            //CmdUpdateScore(netId);
             CmdGetSpawn();
             GameObject ab = GameObject.FindGameObjectWithTag("Abil");
             if (ab)
@@ -105,7 +105,7 @@ public class PlayerGhost : NetworkBehaviour {
         
 	}
     [Command]
-    void CmdSpawn(GameObject a1, GameObject a2)
+    void CmdSpawn(string a1, string a2)
     {
         
         GameObject p = Instantiate(playerPre, spawn.transform.position, Quaternion.Euler(0, 0, 0));
@@ -121,10 +121,12 @@ public class PlayerGhost : NetworkBehaviour {
         PlayerMover pm = p.GetComponent<PlayerMover>();
         //pm.inp = inp;
         pm.ghost = this;
-        if (a1)
+        if (a1!=null)
         {
-            pm.abilPre1 = a1;
-            pm.abilPre2 = a2;
+            GameObject a1Pre = Resources.Load("attacks/" + a1) as GameObject;
+            GameObject a2Pre = Resources.Load("attacks/" + a2) as GameObject;
+            pm.abilPre1 = a1Pre;
+            pm.abilPre2 = a2Pre;
         }
         
 
@@ -207,6 +209,7 @@ public class PlayerGhost : NetworkBehaviour {
         gm = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameMngr>();
         myConId = GetComponent<NetworkIdentity>().connectionToClient.connectionId;
         gm.assignConnection(GetComponent<NetworkIdentity>().connectionToClient, netId);
+        sv.register(myConId);
     }
 
     void OnDestroy()

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class Ability : MonoBehaviour, IPointerClickHandler
 {
-    public GameObject AttackPre;
+    public string AttackPre;
     public GameObject self;
     ElementPanel ele;
     Image img;

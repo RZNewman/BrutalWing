@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class AbilSelector : MonoBehaviour {
-    public GameObject abilPre1, abilPre2;
+    public string abilPre1, abilPre2;
     public GameObject abilI1, abilI2;
 	// Use this for initialization
 	void Start () {

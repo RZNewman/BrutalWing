@@ -32,6 +32,7 @@ public abstract class Attack : NetworkBehaviour {
         GameObject par = ClientScene.FindLocalObject(owner);
         transform.parent = par.transform;
         transform.position = transform.parent.position;
+        transform.rotation = transform.parent.rotation;
         visuals();
     }
     protected abstract void visuals();

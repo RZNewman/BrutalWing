@@ -11,7 +11,10 @@ public class TestAttack : NetworkBehaviour {
     {
         if (isServer)
         {
-            other.GetComponent<PlayerMover>().getHit(force, transform.position, damage);
+            Vector3 hitDirection = other.gameObject.transform.position - transform.position;
+            hitDirection.y = 0;
+            hitDirection.Normalize();
+            other.GetComponent<PlayerMover>().getHit(force, hitDirection, damage);
         }
        
        

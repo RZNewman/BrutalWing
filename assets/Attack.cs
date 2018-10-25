@@ -15,7 +15,7 @@ public abstract class Attack : NetworkBehaviour {
 
     [SyncVar]
     protected NetworkInstanceId owner;
-    protected NetworkInstanceId player;
+    protected int ownerTeam;
     protected float birth;
     
 
@@ -45,11 +45,13 @@ public abstract class Attack : NetworkBehaviour {
             float cur = Time.time - birth;
             if (cur > duration)
             {
-                //Debug.Log("here");
+                //Debug.Log("death");
+
                 NetworkServer.FindLocalObject(owner).GetComponent<PlayerMover>().RpcEndAttack();
             }
             else
             {
+                //Debug.Log(cur);
                 uptake(cur);
             }
         }
@@ -57,10 +59,10 @@ public abstract class Attack : NetworkBehaviour {
 
 
     [Server]
-    public void setOwner(NetworkInstanceId own, NetworkInstanceId play)
+    public void setOwner(NetworkInstanceId own,int team)
     {
         owner = own;
-        player = play;
+        ownerTeam = team;
     }
 
 	// Update is called once per frame

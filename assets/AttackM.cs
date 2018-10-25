@@ -78,7 +78,7 @@ public class AttackM : Attack {
             Vector3 hitDirection = other.gameObject.transform.position - transform.position;
             hitDirection.y = 0;
             hitDirection.Normalize();
-            other.GetComponent<PlayerMover>().getHit(force, hitDirection, damage, player);
+            other.GetComponent<PlayerMover>().getHit(force, hitDirection, damage, ownerTeam);
 
 
 

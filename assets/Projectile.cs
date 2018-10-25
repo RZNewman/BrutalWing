@@ -10,13 +10,13 @@ public class Projectile : NetworkBehaviour {
     public float vert = 0;
     public float lifetime =2;
 
-    NetworkInstanceId player;
+    int ownerTeam;
     GameObject owner;
     float birth;
 
-    public void setPlayer(NetworkInstanceId p, NetworkInstanceId o)
+    public void setPlayer(int t, NetworkInstanceId o)
     {
-        player = p;
+        ownerTeam = t;
         owner = NetworkServer.FindLocalObject(o);
     }
 	// Use this for initialization
@@ -42,7 +42,7 @@ public class Projectile : NetworkBehaviour {
             //hit.Add(other.gameObject);
             if (other.GetComponent<PlayerMover>())
             {
-                other.GetComponent<PlayerMover>().getHit(force, transform.forward, damage, player);
+                other.GetComponent<PlayerMover>().getHit(force, transform.forward, damage, ownerTeam);
             }
             
             Destroy(gameObject);

@@ -25,7 +25,7 @@ public class AttackS : Attack {
             }
             
             Spawnable spa = s.GetComponent<Spawnable>();
-            spa.setPlayer(player, owner);
+            spa.setPlayer(ownerTeam, owner);
             NetworkServer.Spawn(s);
         }
     }

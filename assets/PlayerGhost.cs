@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class PlayerGhost : NetworkBehaviour {
     CamMove cam;
@@ -12,47 +14,109 @@ public class PlayerGhost : NetworkBehaviour {
     ServerMngr sv;
     int myConId;
 
+    [SyncVar]
+    int team;
+
     GameObject spawn;
-
     PhysicalInput inp;
-	// Use this for initialization
-	public override void OnStartLocalPlayer () {
-        
-        if (isLocalPlayer)
-        {
-            inp = GetComponent<PhysicalInput>();
-            gm = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameMngr>();
-            CmdAssignConnection();
-            //CmdUpdateScore(netId);
-            CmdGetSpawn();
-            GameObject ab = GameObject.FindGameObjectWithTag("Abil");
-            if (ab)
-            {
-                abilities = ab.GetComponent<AbilSelector>();
-                gm.popAs(abilities);
-            }
-            
-        }
 
+    //void OnEnable()
+    //{
+    //    SceneManager.sceneLoaded += OnSceneLoaded;
+    //}
+
+    //// called second
+
+    public void Start()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
+    // Use this for initialization
+    public override void OnStartLocalPlayer () {
+        //Debug.Log("start");
+        //if (isLocalPlayer)
+        //{
+        inp = GetComponent<PhysicalInput>();
+        CmdServerInit();
+
+        //}
+        
+        Button b = GameObject.FindGameObjectWithTag("Ready").GetComponent<Button>();
+        b.GetComponent<ReadyState>().ghosted = true;
+        b.onClick.AddListener(readyUp);
         
 	}
+    bool ready = false;
+    [Client]
+    public void readyUp()
+    {
+        ready = !ready;
+        CmdReady(ready);
+    }
+    [Command]
+    public void CmdReady(bool r)
+    {
+        sv.ready(myConId, r);
+    }
+    [ClientRpc]
+    public void RpcInitilize()
+    {
+        //Debug.Log("rpc");
+        if (isLocalPlayer)
+        {
+            gameInit();
+        }
+        
+    }
+    public void gameInit()
+    {
+        //Debug.Log("init");
+        gm = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameMngr>();
+        //CmdAssignConnection();
+        //CmdUpdateScore(netId);
+        CmdGetSpawn();
+        GameObject ab = GameObject.FindGameObjectWithTag("Abil");
+        if (ab)
+        {
+            abilities = ab.GetComponent<AbilSelector>();
+            gm.popAs(abilities);
+        }
+    }
     public Vector3 getGroundTarget()
     {
         return inp.groundTarget;
     }
     [Command]
-    void CmdGetSpawn()
+    void CmdServerInit()
     {
         sv = GameObject.FindGameObjectWithTag("Server").GetComponent<ServerMngr>();
-        NetworkInstanceId spawnID = sv.assignSpawn();
-        NetworkConnection nc = GetComponent<NetworkIdentity>().connectionToClient;
+        myConId = connectionToClient.connectionId;
+
+        sv.register(myConId, this);
+    }
+    [Command]
+    void CmdGetSpawn()
+    {
+        #region Assign connections
         
-        spawn = NetworkServer.FindLocalObject(spawnID);
+        gm = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameMngr>();
+        
+        #endregion
+
+
+        //NetworkInstanceId spawnID = sv.assignSpawn();
+        ServerMngr.spawnInfo spnI = sv.getSpawn(myConId);
+        NetworkConnection nc = connectionToClient;
+        
+        spawn = NetworkServer.FindLocalObject(spnI.sid);
+        team = spnI.team;
+
+        gm.assignConnection(connectionToClient, netId, team);
         //for (uint i = 0; i < 10; i++)
         //{
         //    print(i + "  cmd  " + NetworkServer.FindLocalObject(new NetworkInstanceId(i)));
         //}
-        TargetSetSpawn(nc, spawnID);
+        TargetSetSpawn(nc, spnI.sid);
         
 
     }
@@ -84,6 +148,7 @@ public class PlayerGhost : NetworkBehaviour {
         inp.Poll();
 		if(inp.jump&& !spawned)
         {
+            //Debug.Log(spawn);
             if (spawn)
             {
                 spawned = true;
@@ -112,7 +177,7 @@ public class PlayerGhost : NetworkBehaviour {
 
         //GameObject p = Instantiate(playerPre, new Vector3(0,3), Quaternion.Euler(0, 0, 0));
 
-        NetworkConnection nc = GetComponent<NetworkIdentity>().connectionToClient;
+        NetworkConnection nc = connectionToClient;
 
         NetworkServer.SpawnWithClientAuthority(p,nc);
 
@@ -121,6 +186,7 @@ public class PlayerGhost : NetworkBehaviour {
         PlayerMover pm = p.GetComponent<PlayerMover>();
         //pm.inp = inp;
         pm.ghost = this;
+        pm.team = team;
         if (a1!=null)
         {
             GameObject a1Pre = Resources.Load("attacks/" + a1) as GameObject;
@@ -149,11 +215,11 @@ public class PlayerGhost : NetworkBehaviour {
         cam.target = p;
 
     }
-    [Command]
-    void CmdSync(InputHandler.data d)
-    {
-        inp.sync(d);
-    }
+    //[Command]
+    //void CmdSync(InputHandler.data d)
+    //{
+    //    inp.sync(d);
+    //}
     public Vector3 spawnMutate(Vector3 move)
     {
         return move.x * spawn.transform.right + move.y * Vector3.up + move.z * spawn.transform.forward;
@@ -166,50 +232,30 @@ public class PlayerGhost : NetworkBehaviour {
         }
         
     }
-    public void charDied(NetworkInstanceId id)
+    public void charDied(int team)
     {
         spawned = false;
         if (isLocalPlayer)
         {
-            CmdUpdateScore(id);
+            CmdUpdateScore(team);
         }
     }
     [Command]
-    void CmdUpdateScore(NetworkInstanceId id)
+    void CmdUpdateScore(int team)
     {
-        if(id.IsEmpty())
+        if(team==-1)
         {
             //lastHit = -1;
             //do nothing
         }
-        else if (id == netId)
+        else 
         {
 
-            sv.addScore(myConId);
+            gm.addScore(team);
 
         }
-        else
-        {
-            NetworkServer.FindLocalObject(id).GetComponent<PlayerGhost>().sendScore();
-            
-        }
+   
         
-        
-    }
-    [Server]
-    void sendScore()
-    {
-        sv.addScore(myConId);
-    }
-
-    [Command]
-    void CmdAssignConnection()
-    {
-        sv = GameObject.FindGameObjectWithTag("Server").GetComponent<ServerMngr>();
-        gm = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameMngr>();
-        myConId = GetComponent<NetworkIdentity>().connectionToClient.connectionId;
-        gm.assignConnection(GetComponent<NetworkIdentity>().connectionToClient, netId);
-        sv.register(myConId);
     }
 
     void OnDestroy()

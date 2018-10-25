@@ -5,6 +5,7 @@ using UnityEngine;
 public class AbilSelector : MonoBehaviour {
     public string abilPre1, abilPre2;
     public GameObject abilI1, abilI2;
+    public bool holding=false;
 	// Use this for initialization
 	void Start () {
         DontDestroyOnLoad(gameObject);
@@ -19,5 +20,6 @@ public class AbilSelector : MonoBehaviour {
         Ability a2 = abil2.GetComponent<Ability>();
         abilPre2 = a2.AttackPre;
         abilI2 = a2.self;
+        holding = true;
     }
 }

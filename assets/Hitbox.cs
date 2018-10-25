@@ -27,17 +27,17 @@ public class Hitbox : NetworkBehaviour {
 		
 	}
 
-    void OnTriggerEnter(Collider other)
-    {
-        if (isServer && other.gameObject != NetworkServer.FindLocalObject(owner) && !hit.Contains(other.gameObject))
-        {
-            //print(owner);
-            hit.Add(other.gameObject);
-            other.GetComponent<PlayerMover>().getHit(force, transform.position, damage, owner);
+    //void OnTriggerEnter(Collider other)
+    //{
+    //    if (isServer && other.gameObject != NetworkServer.FindLocalObject(owner) && !hit.Contains(other.gameObject))
+    //    {
+    //        //print(owner);
+    //        hit.Add(other.gameObject);
+    //        
 
 
 
 
-        }
-    }
+    //    }
+    //}
 }

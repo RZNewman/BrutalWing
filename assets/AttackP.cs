@@ -28,7 +28,7 @@ public class AttackP : Attack {
             
             p.transform.rotation = transform.rotation;
             Projectile proj = p.GetComponent<Projectile>();
-            proj.setPlayer(player, owner);
+            proj.setPlayer(ownerTeam, owner);
             NetworkServer.Spawn(p);
         }
     }

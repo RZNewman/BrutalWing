@@ -5,16 +5,16 @@ using UnityEngine.Networking;
 
 public abstract class Spawnable : NetworkBehaviour {
     public float lifetime = 2;
-    
 
-    protected NetworkInstanceId player;
+
+    protected int ownerTeam;
     [SyncVar]
     protected NetworkInstanceId owner;
     protected float birth;
 
-    public void setPlayer(NetworkInstanceId p, NetworkInstanceId o)
+    public void setPlayer(int team, NetworkInstanceId o)
     {
-        player = p;
+        ownerTeam = team;
         owner = o;
     }
     // Use this for initialization

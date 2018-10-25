@@ -13,6 +13,7 @@ public class BuffableLoose : MonoBehaviour {
     void Start()
     {
         stats = new Dictionary<string, float>(BASESTATS);
+        buffs = new List<Buff>();
     }
     public void computeStats()
     {

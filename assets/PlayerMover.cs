@@ -101,6 +101,8 @@ public class PlayerMover : NetworkBehaviour {
     float abil1CD = 0;
     [SyncVar]
     float abil2CD = 0;
+    [SyncVar]
+    public int team;
     void FixedUpdate () {
         if (isServer)
         {
@@ -330,7 +332,7 @@ public class PlayerMover : NetworkBehaviour {
     Vector3 hitDirection;
     int hitDamage;
     [SyncVar]
-    NetworkInstanceId lastHit;
+    int lastHit = -1;
     bool registerHit = false;
     [ClientRpc]
     void RpcTakeHit(Vector3 vel)
@@ -351,12 +353,12 @@ public class PlayerMover : NetworkBehaviour {
     }
 
     [Server]
-    public void getHit(float force, Vector3 location, int dmg, NetworkInstanceId owner)
+    public void getHit(float force, Vector3 location, int dmg, int ownerTeam)
     {
         //GameObject hitter = NetworkServer.FindLocalObject(owner);
         //NetworkIdentity iden = hitter.GetComponent<NetworkIdentity>();
         //NetworkConnection nc = iden.connectionToClient;
-        lastHit = owner;
+        lastHit = ownerTeam;
         getHit(force, location, dmg);
     }
     [Server]
@@ -404,7 +406,7 @@ public class PlayerMover : NetworkBehaviour {
         GameObject atkPre = lookup(a);
         attack = Instantiate(atkPre, transform);
         Attack atk = attack.GetComponent<Attack>();
-        atk.setOwner(netId, ghost.netId);
+        atk.setOwner(netId, team);
         setCD(a, atk.cooldown);
         if (attack.GetComponent<AttackM>())
         {

@@ -11,7 +11,12 @@ public class GameMngr: NetworkBehaviour {
 
     NetworkConnection clientC;
     NetworkInstanceId clientId;
+    int clientTeam;
 
+    //server only
+    Dictionary<int, int> score;
+    bool gameOver = false;
+    int winner = -1;
     public Text scoreboard;
     public GameObject aPanel;
     public GameObject a1, a2;
@@ -20,47 +25,112 @@ public class GameMngr: NetworkBehaviour {
 	void Start () {
         //scoreboard = GetComponentInChildren<Text>();
         canv = GetComponentInChildren<Canvas>();
+        score = new Dictionary<int, int>();
+        if (isServer)
+        {
+            //GameObject.FindGameObjectWithTag("Server").GetComponent<ServerMngr>().gameInit();
+        }
+    }
+    IEnumerator endGame()
+    {
+        yield return new WaitForSeconds(5);
+        GameObject.FindGameObjectWithTag("Net").GetComponent<NetworkManager>().ServerChangeScene("AbilSelect");
+    }
+    [Server]
+    public void registerScore(int team)
+    {
+        if (!score.ContainsKey(team))
+        {
+            score.Add(team, 0);
+        }
+        
+        display();
+        
+    }
+    [Server]
+    public void addScore(int team)
+    {
+        if (!gameOver)
+        {
+            score[team] += 1;
+            if (score[team] >= 10)
+            {
+                gameOver = true;
+                winner = team;
+                StartCoroutine(endGame());
+            }
+
+            display();
+        }
+       
+
 
     }
-
-    public void display(int[] score)
+    public void display()
     {
+        if (!gameOver)
+        {
+            //Printable.printDicInt(score);
+            string[] board = new string[score.Count];
+            foreach (int team in score.Keys)
+            {
+                //Debug.Log(team);
+                board[team] = "Team " + team + ": " + score[team];
+
+            }
+            RpcDisplayScore(board);
+        }
+        else{
+            RpcDisplayOver("Team " + winner + " is the winner");
+        }
         
-        RpcDisplayScore(score);
     }
     [ClientRpc]
-    void RpcDisplayScore(int[] score)
+    void RpcDisplayScore(string[] scores)
     {
-
+        //foreach(string s in scores)
+        //{
+        //    Debug.Log(s);
+        //}
         string scoreS = "";
         string scorePre = "";
-        for (int i = 0; i < score.Length; i++)
+        for(int i =0; i<scores.Length; i++)
         {
-            if (i == clientC.connectionId)
+            string txt = scores[i];
+            if (i == clientTeam)
             {
-                scorePre = "" + score[i];
+                scorePre = txt;
             }
             else
             {
-                scoreS += " - " + score[i];
+                scoreS += " - "+txt;
             }
-
         }
+        //Debug.Log(scorePre);
+        //Debug.Log(scoreS);
         scoreS = scorePre + scoreS;
         scoreboard.text = scoreS;
     }
+    [ClientRpc]
+    void RpcDisplayOver(string win)
+    {
+   
+        scoreboard.text = win;
+    }
 
     [Server]
-    public void assignConnection(NetworkConnection nc, NetworkInstanceId id)
+    public void assignConnection(NetworkConnection nc, NetworkInstanceId id, int team)
     {
         //client = nc;
-        TargetSetConnection(nc, id);
+        registerScore(team);
+        TargetSetConnection(nc, id, team);
     }
     [TargetRpc]
-    void TargetSetConnection(NetworkConnection nc, NetworkInstanceId id)
+    void TargetSetConnection(NetworkConnection nc, NetworkInstanceId id, int team)
     {
         clientC = nc;
         clientId = id;
+        clientTeam = team;
     }
 
     public void setCam(Camera c)
@@ -71,6 +141,7 @@ public class GameMngr: NetworkBehaviour {
     
     public void popAs(AbilSelector a)
     {
+        //Debug.Log("instant");
         a1 = Instantiate(a.abilI1, aPanel.transform);
         a1.transform.position -= Vector3.right*70;
         a2 = Instantiate(a.abilI2, aPanel.transform);

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class AbilPanel : MonoBehaviour {
@@ -33,8 +34,9 @@ public class AbilPanel : MonoBehaviour {
         {
             GameObject[] sel = selected.getSelected();
             holder.hold(sel[0], sel[1]);
+            
             //Debug.Break();
-            SceneManager.LoadScene(1);
+            //SceneManager.LoadScene(1);
         }
     }
 }

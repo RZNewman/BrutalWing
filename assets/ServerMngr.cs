@@ -78,8 +78,8 @@ public class ServerMngr : NetworkBehaviour
         //Debug.Log("Load 2");
         if (scene.buildIndex != 2)
         {
-            
-            gameInit();
+
+            StartCoroutine(gameInit());
         }
     }
     // Use this for initialization
@@ -93,14 +93,16 @@ public class ServerMngr : NetworkBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    public void gameInit()
+    IEnumerator gameInit()
     {
-        
-        //yield return GameObject.FindGameObjectWithTag("GameController");
-        foreach(Player p in players)
-        { 
-            NetworkServer.SetClientReady(p.ghost.connectionToClient);
+        while(!players.TrueForAll(p => p.ghost.connectionToClient.isReady)){
+            yield return null;
         }
+        
+        //foreach(Player p in players)
+        //{ 
+        //    NetworkServer.SetClientReady(p.ghost.connectionToClient);
+        //}
         NetworkServer.SpawnObjects();
         spawns = GameObject.FindGameObjectsWithTag("Respawn");
         GameObject gmO = GameObject.FindGameObjectWithTag("GameController");

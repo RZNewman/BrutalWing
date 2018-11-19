@@ -4,11 +4,11 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class ReadyState : MonoBehaviour {
-    public AbilSelector ab;
+    AbilSelector ab;
     public bool ghosted = false;
 	// Use this for initialization
 	void Start () {
-		
+        ab = GameObject.FindGameObjectWithTag("Abil").GetComponent<AbilSelector>();
 	}
 	
 	// Update is called once per frame

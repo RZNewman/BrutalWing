@@ -30,6 +30,30 @@ public class PlayerGhost : NetworkBehaviour {
     public void Start()
     {
         DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (!isLocalPlayer)
+            return;
+        //Debug.Log("Load 1");
+
+        //Debug.Log("Load 2");
+        if (scene.buildIndex != 2)
+        {
+
+            
+        }
+        else
+        {
+            SetReadyButton();
+        }
+    }
+    void SetReadyButton()
+    {
+        Button b = GameObject.FindGameObjectWithTag("Ready").GetComponent<Button>();
+        b.GetComponent<ReadyState>().ghosted = true;
+        b.onClick.AddListener(readyUp);
     }
     // Use this for initialization
     public override void OnStartLocalPlayer () {
@@ -40,12 +64,10 @@ public class PlayerGhost : NetworkBehaviour {
         CmdServerInit();
 
         //}
-        
-        Button b = GameObject.FindGameObjectWithTag("Ready").GetComponent<Button>();
-        b.GetComponent<ReadyState>().ghosted = true;
-        b.onClick.AddListener(readyUp);
-        
-	}
+
+        SetReadyButton();
+
+    }
     bool ready = false;
     [Client]
     public void readyUp()
@@ -269,6 +291,19 @@ public class PlayerGhost : NetworkBehaviour {
             
         }
         
+    }
+    [Server]
+    public void SceneReset()
+    {
+        spawn = null;
+        team = -1;
+        RpcSceneReset();
+    }
+    [ClientRpc]
+    void RpcSceneReset()
+    {
+        spawn = null;
+        ready = false;
     }
 
 }

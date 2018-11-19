@@ -3,13 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class AbilSelector : MonoBehaviour {
+    public static AbilSelector instance;
     public string abilPre1, abilPre2;
     public GameObject abilI1, abilI2;
     public bool holding=false;
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+
+    private void Awake()
+    {
+        if (!instance)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
         DontDestroyOnLoad(gameObject);
-	}
+
+    }
 	
 	// Update is called once per frame
 	public void hold(GameObject abil1, GameObject abil2)

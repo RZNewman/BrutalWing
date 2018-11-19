@@ -81,6 +81,10 @@ public class ServerMngr : NetworkBehaviour
 
             StartCoroutine(gameInit());
         }
+        else
+        {
+            StartCoroutine(lobbyInit());
+        }
     }
     // Use this for initialization
     void Start()
@@ -114,6 +118,25 @@ public class ServerMngr : NetworkBehaviour
         }
 
     }
+    IEnumerator lobbyInit()
+    {
+        while (!players.TrueForAll(p => p.ghost.connectionToClient.isReady))
+        {
+            yield return null;
+        }
+        foreach (Player p in players)
+        {
+            GameObject lobP = Instantiate(lobbyPre, GameObject.FindGameObjectWithTag("Lobby").transform);
+            p.lob = lobP.GetComponent<LobbyPlayer>();
+            p.lob.player(p.team);
+            NetworkServer.Spawn(p.lob.gameObject);
+            p.lob.RpcParent();
+            p.ghost.SceneReset();
+
+
+        }
+
+    }
 
     // Update is called once per frame
     void Update()
@@ -135,7 +158,7 @@ public class ServerMngr : NetworkBehaviour
             GameObject lobP = Instantiate(lobbyPre, GameObject.FindGameObjectWithTag("Lobby").transform);
 
             p.lob = lobP.GetComponent<LobbyPlayer>();
-            p.lob.player(connections.Count);
+            p.lob.player(p.team);
             players.Add(p);
             
         }

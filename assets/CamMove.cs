@@ -7,6 +7,7 @@ public class CamMove : MonoBehaviour {
     public Vector3 offset;
 
     Vector3 offsetReal;
+
     GameObject click;
 	// Use this for initialization
 	void Awake () {
@@ -23,17 +24,17 @@ public class CamMove : MonoBehaviour {
         transform.rotation = Quaternion.LookRotation(spawn.transform.forward+spawn.transform.up*-5);
         click.transform.rotation = Quaternion.identity;
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update()
+    {
         if (target)
         {
             //print(offsetReal);
             transform.position = target.transform.position + offsetReal;
         }
-        
-	}
 
+    }
 
 
 }

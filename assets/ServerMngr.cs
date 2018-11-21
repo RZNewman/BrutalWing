@@ -92,7 +92,7 @@ public class ServerMngr : NetworkBehaviour
         //gameInit();
         players = new List<Player>();
         connections = new List<int>();
-        Buffable.baseline();
+        BuffableLoose.baseline();
         //Debug.Log("enable");
         SceneManager.sceneLoaded += OnSceneLoaded;
     }

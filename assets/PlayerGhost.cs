@@ -31,6 +31,7 @@ public class PlayerGhost : NetworkBehaviour {
     {
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
+        
     }
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
@@ -62,6 +63,7 @@ public class PlayerGhost : NetworkBehaviour {
         //{
         inp = GetComponent<PhysicalInput>();
         CmdServerInit();
+        BuffableLoose.baseline();
 
         //}
 
@@ -235,6 +237,7 @@ public class PlayerGhost : NetworkBehaviour {
         pm.ghost = this;
         spawned = true;
         cam.target = p;
+        //cam.watch(p);
 
     }
     //[Command]

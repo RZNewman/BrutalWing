@@ -9,6 +9,7 @@ public class BuffableLoose : MonoBehaviour {
     public static void baseline(){
         BASESTATS = new Dictionary<string, float>();
         BASESTATS.Add("moveMult", 1);
+        BASESTATS.Add("FullSprint", 0);
     }
     void Start()
     {
@@ -20,16 +21,28 @@ public class BuffableLoose : MonoBehaviour {
         stats = new Dictionary<string, float>(BASESTATS);
         foreach (Buff b in buffs)
         {
-            addBuff(b);
+            computeBuff(b);
         }
 
     }
-    void addBuff(Buff b)
+    void computeBuff(Buff b)
     { 
         foreach(string mod  in b.mods.Keys)
         {
             stats[mod]+=b.mods[mod];
         }
     }
-    
+    public void addBuff(Buff b)
+    {
+        buffs.Add(b);
+    }
+    public void removeBuff(Buff b)
+    {
+        buffs.Remove(b);
+    }
+    public float buf(string key)
+    {
+        return stats[key];
+    }
+
 }

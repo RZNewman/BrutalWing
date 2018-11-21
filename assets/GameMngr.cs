@@ -53,7 +53,7 @@ public class GameMngr: NetworkBehaviour {
         if (!gameOver)
         {
             score[team] += 1;
-            if (score[team] >= 2)
+            if (score[team] >= 10)
             {
                 gameOver = true;
                 winner = team;

@@ -10,8 +10,8 @@ public class Projectile : NetworkBehaviour {
     public float vert = 0;
     public float lifetime =2;
 
-    int ownerTeam;
-    GameObject owner;
+    protected int ownerTeam;
+    protected GameObject owner;
     float birth;
 
     public void setPlayer(int t, NetworkInstanceId o)
@@ -19,8 +19,13 @@ public class Projectile : NetworkBehaviour {
         ownerTeam = t;
         owner = NetworkServer.FindLocalObject(o);
     }
-	// Use this for initialization
-	void Start () {
+    public void setPlayer(int t, GameObject o) //Can Only be used inside the server
+    {
+        ownerTeam = t;
+        owner = o;
+    }
+    // Use this for initialization
+    void Start () {
         Rigidbody rb = GetComponent<Rigidbody>();
         Vector3 vel = new Vector3();
         vel += transform.forward * speed;
@@ -58,7 +63,7 @@ public class Projectile : NetworkBehaviour {
             endLife();
         }
     }
-    protected void endLife()
+    protected virtual void endLife()
     {
         Destroy(gameObject);
     }

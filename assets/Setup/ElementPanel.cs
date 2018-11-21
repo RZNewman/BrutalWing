@@ -29,18 +29,18 @@ public class ElementPanel : MonoBehaviour {
             selected = true;
             panel.select(this);
 
-            select1 = a;
-            select1.GetComponent<Ability>().renderCD(1);
+            select2 = a;
+            select2.GetComponent<Ability>().renderCD(2);
 
-            if(select1 == transform.GetChild(0).gameObject)
+            if(select2 == transform.GetChild(0).gameObject)
             {
-                select2 = transform.GetChild(1).gameObject;
+                select1 = transform.GetChild(1).gameObject;
             }
             else
             {
-                select2 = transform.GetChild(0).gameObject;
+                select1 = transform.GetChild(0).gameObject;
             }
-            select2.GetComponent<Ability>().renderCD(2);
+            select1.GetComponent<Ability>().renderCD(1);
         }
         else if(a == select1)
         {
@@ -55,11 +55,11 @@ public class ElementPanel : MonoBehaviour {
         }
         else
         {
-            select2.GetComponent<Ability>().renderCD(0);
-            select2 = select1;
-            select2.GetComponent<Ability>().renderCD(2);
-            select1 = a;
+            select1.GetComponent<Ability>().renderCD(0);
+            select1 = select2;
             select1.GetComponent<Ability>().renderCD(1);
+            select2 = a;
+            select2.GetComponent<Ability>().renderCD(2);
         }
     }
     public void deselect()

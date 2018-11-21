@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 public class Fight : NetworkBehaviour {
-
+    public string sceneName = "FourStar";
     public void fight()
     {
-        GameObject.FindGameObjectWithTag("Net").GetComponent<NetworkManager>().ServerChangeScene("FourStar");
+        GameObject.FindGameObjectWithTag("Net").GetComponent<NetworkManager>().ServerChangeScene(sceneName);
     }
 }

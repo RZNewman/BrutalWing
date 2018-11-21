@@ -18,6 +18,7 @@ public class PlayerMover : NetworkBehaviour {
     LookState look;
     GameObject attack;
     Visuals vis;
+    BuffableLoose buffholder;
 
 
     enum PState
@@ -77,7 +78,7 @@ public class PlayerMover : NetworkBehaviour {
         look = LookState.Free;
         
         vis = GetComponent<Visuals>();
-
+        buffholder = GetComponent<BuffableLoose>();
 
     }
 
@@ -104,8 +105,10 @@ public class PlayerMover : NetworkBehaviour {
     [SyncVar]
     public int team;
     void FixedUpdate () {
+        
         if (isServer)
         {
+            buffholder.computeStats();
             if (registerHit)
             {
                 registerHit = false;
@@ -136,6 +139,7 @@ public class PlayerMover : NetworkBehaviour {
         }
         if (hasAuthority)
         {
+            buffholder.computeStats();
             ghost.renderCD(abil1CD, abil2CD);
             bool movement = true;
             Vector3 move = new Vector3();
@@ -201,6 +205,7 @@ public class PlayerMover : NetworkBehaviour {
                 //{
                 //    planeVel = planeVel.normalized * maxSpeed;
                 //}
+                
                 if (!sprinting )
                 {
                     #region sprintS
@@ -264,32 +269,34 @@ public class PlayerMover : NetworkBehaviour {
             }
             if (look == LookState.Free && inp.attacking)
             {
-                
+                if (buffholder.buf("FullSprint") < 1)
+                {
+                    setSprint(false);
+                }
                 if (inp.atk1)
                 {
                     look = LookState.Attacking;
-                    setSprint(false);
                     CmdAtk(attackType.basic, inp.groundTarget);
                 }
                 else if (inp.atk2)
                 {
                     look = LookState.Attacking;
-                    setSprint(false);
                     CmdAtk(attackType.heavy, inp.groundTarget);
                 }
                 else if (inp.abil1 && abil1CD<=0)
                 {
                     look = LookState.Attacking;
-                    setSprint(false);
                     CmdAtk(attackType.abil1, inp.groundTarget);
                 }
                 else if (inp.abil2&& abil2CD <=0)
                 {
                     look = LookState.Attacking;
-                    setSprint(false);
+                    
                     CmdAtk(attackType.abil2, inp.groundTarget);
                 }
 
+
+                
 
             }
             vis.CmdPropagate();
@@ -298,10 +305,10 @@ public class PlayerMover : NetworkBehaviour {
 
     }
 
-    void setSprint(bool s)
+    public void setSprint(bool s)
     {
         sprinting = s;
-        
+        //Debug.Log(s);
         if (s)
         {
             sprintBuildCurrent = sprintBuild;
@@ -366,7 +373,7 @@ public class PlayerMover : NetworkBehaviour {
     {
         registerHit = true;
         hitMag = force;
-        hitDirection = dir;
+        hitDirection = dir.normalized;
         hitDamage = dmg;
     }
     Vector3 planeVel

@@ -344,7 +344,15 @@ public class PlayerMover : NetworkBehaviour {
     [ClientRpc]
     void RpcTakeHit(Vector3 vel)
     {
-        planeVel = vel;
+        if (Mathf.Abs(vel.y) <= 0.001)
+        {
+            planeVel = vel;
+        }
+        else
+        {
+            rb.velocity = vel;
+        }
+        
         current = PState.KB;
         setSprint(false);
     }
@@ -444,5 +452,12 @@ public class PlayerMover : NetworkBehaviour {
         
         
     }
+    [Server]
+    public void healthTeam()
+    {
+        hp = GetComponent<Health>();
+        hp.setTeam(team);
 
+        //Debug.Log(team);
+    }
 }

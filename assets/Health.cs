@@ -9,11 +9,16 @@ public class Health : NetworkBehaviour {
     public RectTransform slider;
 
     [SyncVar]
+    int team;
+    GameMngr gm;
+    [SyncVar]
     int health;
 	// Use this for initialization
 	void Start () {
         health = maxHealth;
-	}
+        
+        
+    }
 	
     public bool change(int i)
     {
@@ -31,12 +36,33 @@ public class Health : NetworkBehaviour {
     void RpcDisplay(int hp)
     {
         slider.localScale = new Vector3(((float)hp) / maxHealth, 1);
+        
     }
     public bool dead
     {
         get
         {
             return health <= 0;
+        }
+    }
+    [Server]
+    public void setTeam(int t)
+    {
+        team = t;
+        RpcTeamColor(t);
+    }
+    [ClientRpc]
+    void RpcTeamColor(int t)
+    {
+        if (!gm)
+        {
+            gm = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameMngr>();
+        }
+        //Debug.Log(gm.clientTeam);
+        //Debug.Log(t);
+        if (gm.clientTeam == t)
+        {
+            slider.GetComponent<Image>().color = Color.blue;
         }
     }
 }

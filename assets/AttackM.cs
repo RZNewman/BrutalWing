@@ -71,18 +71,23 @@ public class AttackM : Attack {
     }
     void OnTriggerEnter(Collider other)
     {
-        if (isServer && other.gameObject != transform.parent.gameObject && !hit.Contains(other.gameObject))
+        if (isServer)
         {
-            //print(owner);
-            hit.Add(other.gameObject);
-            Vector3 hitDirection = other.gameObject.transform.position - transform.position;
-            hitDirection.y = 0;
-            hitDirection.Normalize();
-            other.GetComponent<PlayerMover>().getHit(force, hitDirection, damage, ownerTeam);
+            PlayerMover pm = other.GetComponent<PlayerMover>();
+            if (pm.team!=ownerTeam&& !hit.Contains(other.gameObject))
+            {
+                //print(owner);
+                hit.Add(other.gameObject);
+                Vector3 hitDirection = other.gameObject.transform.position - transform.position;
+                hitDirection.y = 0;
+                hitDirection.Normalize();
+                other.GetComponent<PlayerMover>().getHit(force, hitDirection, damage, ownerTeam);
 
 
 
 
+            }
         }
+        
     }
 }

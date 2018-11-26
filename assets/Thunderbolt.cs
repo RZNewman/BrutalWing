@@ -37,16 +37,17 @@ public class Thunderbolt : Spawnable
             if (isServer)
             {
                 
-                Collider[] found = Physics.OverlapCapsule(transform.position, transform.position + Vector3.up * col.height, col.radius, 1 << 10);
+                Collider[] found = Physics.OverlapCapsule(transform.position, transform.position + Vector3.up * col.height, col.radius*transform.localScale.x, 1 << 10);
                 foreach (Collider other in found)
                 {
-                    if (other.gameObject != ownerObj)
+                    PlayerMover pm = other.GetComponent<PlayerMover>();
+                    if (pm.team != ownerTeam && !hit.Contains(other.gameObject))
                     {
                         hit.Add(other.gameObject);
                         Vector3 hitDirection = other.gameObject.transform.position - transform.position;
                         
                         hitDirection.Normalize();
-                        hitDirection.y = 1;
+                        hitDirection.y = 5;
                         hitDirection.Normalize();
                         other.GetComponent<PlayerMover>().getHit(forceVertical, hitDirection, 1, ownerTeam);
                     }

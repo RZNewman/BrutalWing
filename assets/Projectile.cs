@@ -41,16 +41,26 @@ public class Projectile : NetworkBehaviour {
     // Update is called once per frame
     void OnTriggerEnter(Collider other)
     {
-        if (isServer && other.gameObject != owner)
+        if (isServer)
         {
             //print(owner);
             //hit.Add(other.gameObject);
-            if (other.GetComponent<PlayerMover>())
+            PlayerMover pm = other.GetComponent<PlayerMover>();
+            if (pm)
             {
-                other.GetComponent<PlayerMover>().getHit(force, transform.forward, damage, ownerTeam);
+                if(pm.team != ownerTeam)
+                {
+                    other.GetComponent<PlayerMover>().getHit(force, transform.forward, damage, ownerTeam);
+                    Destroy(gameObject);
+                }
+                
+            }
+            else
+            {
+                Destroy(gameObject);
             }
             
-            Destroy(gameObject);
+            
 
 
 

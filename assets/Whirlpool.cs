@@ -29,8 +29,8 @@ public class Whirlpool : Spawnable {
 
             foreach (Collider c in Physics.OverlapSphere(transform.position, col.radius*transform.localScale.x, 1 << 10))
             {
-                //print(c);
-                if (c.gameObject!= ownerObj && c.GetComponent<PlayerMover>().grounded)
+                PlayerMover pm = c.GetComponent<PlayerMover>();
+                if (pm.team!=ownerTeam&&pm.grounded)
                 {
                     //print("owner");
                     Vector3 pos = transform.position;

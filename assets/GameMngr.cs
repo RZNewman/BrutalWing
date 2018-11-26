@@ -11,7 +11,8 @@ public class GameMngr: NetworkBehaviour {
 
     NetworkConnection clientC;
     NetworkInstanceId clientId;
-    int clientTeam;
+    [HideInInspector]
+    public int clientTeam;
 
     //server only
     Dictionary<int, int> score;
@@ -71,7 +72,7 @@ public class GameMngr: NetworkBehaviour {
         if (!gameOver)
         {
             //Printable.printDicInt(score);
-            string[] board = new string[score.Count];
+            string[] board = new string[score.Count+1];
             foreach (int team in score.Keys)
             {
                 //Debug.Log(team);
@@ -94,7 +95,7 @@ public class GameMngr: NetworkBehaviour {
         //}
         string scoreS = "";
         string scorePre = "";
-        for(int i =0; i<scores.Length; i++)
+        for(int i =1; i<scores.Length; i++)
         {
             string txt = scores[i];
             if (i == clientTeam)

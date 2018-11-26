@@ -6,7 +6,7 @@ using UnityEngine.Networking;
 public abstract class Spawnable : NetworkBehaviour {
     public float lifetime = 2;
 
-
+    [SyncVar]
     protected int ownerTeam;
     [SyncVar]
     protected NetworkInstanceId owner;

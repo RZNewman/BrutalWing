@@ -36,10 +36,11 @@ public class Shockwave : Spawnable {
             expander.transform.localScale = Vector3.Lerp(new Vector3(.2f, .2f, .2f), new Vector3(.9f, .9f, .9f), diff / visExpand);
             if (isServer)
             {
-                Collider[] found = Physics.OverlapSphere(transform.position, col.radius, 1 << 10);
+                Collider[] found = Physics.OverlapSphere(transform.position, col.radius*transform.localScale.x, 1 << 10);
                 foreach (Collider other in found)
                 {
-                    if (other.gameObject != ownerObj)
+                    PlayerMover pm = other.GetComponent<PlayerMover>();
+                    if (pm.team!= ownerTeam && !hit.Contains(other.gameObject))
                     {
                         hit.Add(other.gameObject);
                         Vector3 hitDirection = other.gameObject.transform.position - transform.position;

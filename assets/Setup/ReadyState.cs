@@ -8,7 +8,8 @@ public class ReadyState : MonoBehaviour {
     public bool ghosted = false;
 	// Use this for initialization
 	void Start () {
-        ab = GameObject.FindGameObjectWithTag("Abil").GetComponent<AbilSelector>();
+        //ab = GameObject.FindGameObjectWithTag("Abil").GetComponent<AbilSelector>();
+        ab = AbilSelector.instance;
 	}
 	
 	// Update is called once per frame

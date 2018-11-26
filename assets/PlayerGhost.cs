@@ -211,6 +211,7 @@ public class PlayerGhost : NetworkBehaviour {
         //pm.inp = inp;
         pm.ghost = this;
         pm.team = team;
+        pm.healthTeam();
         if (a1!=null)
         {
             GameObject a1Pre = Resources.Load("attacks/" + a1) as GameObject;

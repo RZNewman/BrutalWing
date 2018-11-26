@@ -10,6 +10,7 @@ public class ServerMngr : NetworkBehaviour
     public static ServerMngr instance;
     public bool ffa = true;
     public GameObject lobbyPre;
+    public GameObject spawnPre;
     GameObject[] spawns;
     GameMngr gm;
     class Player
@@ -40,7 +41,8 @@ public class ServerMngr : NetworkBehaviour
     }
     List<int> connections;
     List<Player> players;
-    int spawnNum = 0;
+
+    bool teams = false;
 
     private void Awake()
     {
@@ -111,11 +113,67 @@ public class ServerMngr : NetworkBehaviour
         spawns = GameObject.FindGameObjectsWithTag("Respawn");
         GameObject gmO = GameObject.FindGameObjectWithTag("GameController");
         gm = gmO.GetComponent<GameMngr>();
-        foreach (Player p in players)
+        if (teams)
         {
-            p.spawnInd = assignSpawn();
-            p.ghost.RpcInitilize();
+            Dictionary<int, List<Player>> teamPlayers = new Dictionary<int, List<Player>>();
+            foreach (Player p in players)
+            {
+                if (!teamPlayers.ContainsKey(p.team))
+                {
+                    teamPlayers.Add(p.team, new List<Player>() { p});
+                }
+                else
+                {
+                    teamPlayers[p.team].Add(p);
+                }
+            }
+            List<GameObject> teamSpawns = new List<GameObject>();
+            int spawnNum = 0;
+            List<GameObject> newSpawns = new List<GameObject>();
+            foreach (GameObject s in spawns)
+            {
+                teamSpawns.Add(s);
+            }
+
+            foreach(int team in teamPlayers.Keys)
+            {
+                int numPlayers = teamPlayers[team].Count;
+                GameObject teamSpawn = teamSpawns[spawnNum];
+                spawnNum = (spawnNum + 1) % (teamSpawns.Count);
+                for (int i =0; i< numPlayers; i++)
+                {
+                    GameObject s =Instantiate(spawnPre, 
+                        teamSpawn.transform.position+
+                        teamSpawn.transform.forward* ((i+1)/2 *(Mathf.Pow(-1,i)))*2
+
+                        , teamSpawn.transform.rotation);
+                    newSpawns.Add(s);
+                    NetworkServer.Spawn(s);
+                    teamPlayers[team][i].spawnInd = newSpawns.Count - 1;
+                }
+            }
+            spawns = newSpawns.ToArray();
+            foreach(GameObject s in teamSpawns)
+            {
+                Destroy(s);
+            }
+
+            foreach (Player p in players)
+            {
+                p.ghost.RpcInitilize();
+            }
         }
+        else
+        {
+            int spawnNum = 0;
+            foreach (Player p in players)
+            {
+                p.spawnInd = spawnNum;
+                spawnNum = (spawnNum + 1) % (spawns.Length);
+                p.ghost.RpcInitilize();
+            }
+        }
+
 
     }
     IEnumerator lobbyInit()
@@ -154,7 +212,7 @@ public class ServerMngr : NetworkBehaviour
         {
             GameObject.FindGameObjectWithTag("Fight").GetComponent<Button>().interactable = false;
             connections.Add(id);
-            Player p = new Player(id, connections.Count-1, g);
+            Player p = new Player(id, connections.Count, g);
             GameObject lobP = Instantiate(lobbyPre, GameObject.FindGameObjectWithTag("Lobby").transform);
 
             p.lob = lobP.GetComponent<LobbyPlayer>();
@@ -183,15 +241,7 @@ public class ServerMngr : NetworkBehaviour
         }
     }
   
-    int assignSpawn()
-    {
-
-        //print(spawn);
-        int sp = spawnNum;
-        spawnNum = (spawnNum + 1) % (spawns.Length);
-        return sp;
-
-    }
+  
     public struct spawnInfo
     {
         public NetworkInstanceId sid;
@@ -214,5 +264,32 @@ public class ServerMngr : NetworkBehaviour
         //}
         spawnInfo si = new spawnInfo(sid, p.team);
         return si;
+    }
+
+    public void makeTeams()
+    {
+        teams = !teams;
+        if (teams)
+        {
+            int t = 1;
+            for (int i = 0; i < players.Count; i++)
+            {
+                players[i].team = t;
+                //t += 1; //same team line
+                t %= 3;//numTeams+1
+                t = t == 0 ? 1 : t;
+            }
+        }
+        else
+        {
+            for(int i = 0; i < players.Count; i++)
+            {
+                players[i].team = i + 1;
+            }
+        }
+        foreach (Player p in players)
+        {
+            //Debug.Log(p.team);
+        }
     }
 }
